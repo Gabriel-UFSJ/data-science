@@ -18,18 +18,36 @@ def get_project_parameters():
     return complexity, time_frame, members
 
 
+# get the user credentials from the user
+def get_credentials():
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
+
+    return username, password
+
+
+# check if the entered credentials match the expected values
+def authenticate(username, password):
+    if username == "admin" and password == "linklink":
+        return True
+    else:
+        return False
+
+
 # get the project parameters from the user
-complexity, time_frame, members = get_project_parameters()
+username, password = get_credentials()
 
+if authenticate(username, password):
+    complexity, time_frame, members = get_project_parameters()
 
-# create a Project object with the user's chosen parameters
-my_project = Project(complexity, time_frame, members)
+    # create a Project object with the user's chosen parameters
+    my_project = Project(complexity, time_frame, members)
 
+    # calculate the price of the project using the calculate_price() method
+    price = my_project.calculate_price()
 
-# calculate the price of the project using the calculate_price() method
-price = my_project.calculate_price()
-
-
-# display the project parameters and the calculated price
-st.write(f"Project parameters: Complexity = {complexity}, Time frame = {time_frame} months, Members = {members}")
-st.write(f"Price: {price:.2f} Brazilian reals")
+    # display the project parameters and the calculated price
+    st.write(f"Project parameters: Complexity = {complexity}, Time frame = {time_frame} months, Members = {members}")
+    st.write(f"Price: {price:.2f} Brazilian reals")
+else:
+    st.write("Invalid username or password")
