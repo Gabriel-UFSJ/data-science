@@ -1,0 +1,35 @@
+import streamlit as st
+
+# import the Project class and its methods
+from project import Project
+
+
+# create a Streamlit app with a title and a sidebar
+st.set_page_config(page_title="Project Price Calculator", page_icon=":money_with_wings:")
+st.sidebar.title("Project Parameters")
+
+
+# define a function to get the project parameters from the user
+def get_project_parameters():
+    complexity = st.sidebar.selectbox("Select the complexity of the project:", ["low", "mid", "high"])
+    time_frame = st.sidebar.slider("Select the time frame (in months) for the project:", 1, 6, 3)
+    members = st.sidebar.slider("Select the number of assigned members for the project:", 1, 5, 3)
+
+    return complexity, time_frame, members
+
+
+# get the project parameters from the user
+complexity, time_frame, members = get_project_parameters()
+
+
+# create a Project object with the user's chosen parameters
+my_project = Project(complexity, time_frame, members)
+
+
+# calculate the price of the project using the calculate_price() method
+price = my_project.calculate_price()
+
+
+# display the project parameters and the calculated price
+st.write(f"Project parameters: Complexity = {complexity}, Time frame = {time_frame} months, Members = {members}")
+st.write(f"Price: {price:.2f} Brazilian reals")
