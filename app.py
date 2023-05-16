@@ -17,25 +17,33 @@ class SistemaLogin:
             reader = csv.reader(f, delimiter=';')
             for row in reader:
                 if row[0] == username and row[1] == senha:
-                    st.session_state['está logado'] = True
-                    st.session_state['nome de usuário'] = username
-                    return True
-        return False
+                    return row[2]  # retorna o tipo de usuário
+        return None
 
     def logout(self):
-        # Remove as informações de autenticação da sessão
-        if 'está logado' in st.session_state:
-            del st.session_state['está logado']
-            del st.session_state['nome de usuário']
-        # Redireciona o usuário para a página de login
-        #st.experimental_rerun()
+        if 'username' in st.session_state:
+            del st.session_state['username']
+            del st.session_state['senha']
+        else:
+            st.warning('Usuário não está logado.')
+    
+    def get_tipo_usuario(self, username):
+        with open(self.usuarios_file, 'r') as f:
+            reader = csv.reader(f, delimiter=';')
+            for row in reader:
+                if row[0] == username:
+                    return row[2]
+        return None
+
+    def tipo_usuario(self):
+        return st.session_state.get('tipo_usuario')
 
 sistema_login = SistemaLogin(USUARIOS_FILE)
 sistema_membros = SistemaCadastroMembros(MEMBROS_FILE, ADVERTENCIAS_FILE)
 
 def cadastrar_membro():
-    if not st.session_state.get('está logado'):
-        st.error('Você precisa fazer login para cadastrar um membro.')
+    if 'username' not in st.session_state:
+        st.error('Você precisa fazer login para cadastrar uma advertência.')
         return
     nome = st.text_input('Nome')
     setor = st.text_input('Setor')
@@ -49,7 +57,7 @@ def cadastrar_membro():
             st.error(str(e))
 
 def cadastrar_advertencia():
-    if not st.session_state.get('está logado'):
+    if 'username' not in st.session_state:
         st.error('Você precisa fazer login para cadastrar uma advertência.')
         return
     nome_membro = st.text_input('Nome do membro')
@@ -78,7 +86,7 @@ def buscar_membro():
             st.error(str(e))
 
 def buscar_advertencias():
-    if not st.session_state.get('está logado'):
+    if 'username' not in st.session_state:
         st.error('Você precisa fazer login para cadastrar uma advertência.')
         return
     nome = st.text_input('Nome')
@@ -91,24 +99,37 @@ def buscar_advertencias():
             st.error(str(e))
 
 def main():
-    sistema_login = SistemaLogin('usuarios.csv')
+    sistema_login = SistemaLogin(USUARIOS_FILE)
 
-    # Se o usuário estiver autenticado, mostra as opções de menu
-    if 'está logado' in st.session_state:
-        st.sidebar.title(f"Olá, {st.session_state['nome de usuário']}!")
-        st.sidebar.write("Você está autenticado.")
-        st.sidebar.button('Logout', on_click=sistema_login.logout)
-        
-        opcoes = ['Cadastrar Membro', 'Cadastrar Advertência', 'Buscar Membro', 'Buscar Advertências']
-        escolha = st.sidebar.selectbox('Escolha uma opção', opcoes)
-        if escolha == 'Cadastrar Membro':
-            cadastrar_membro()
-        elif escolha == 'Cadastrar Advertência':
-            cadastrar_advertencia()
-        elif escolha == 'Buscar Membro':
-            buscar_membro()
-        elif escolha == 'Buscar Advertências':
-            buscar_advertencias()
+    # Verifica se o usuário está autenticado
+    if 'username' in st.session_state:
+        # Obtém o tipo de usuário a partir do CSV
+        tipo_usuario = sistema_login.autenticar(st.session_state['username'], st.session_state['senha'])
+
+        # Verifica se o usuário ainda existe no CSV, caso contrário faz logout
+        if tipo_usuario is None:
+            sistema_login.logout()
+        else:
+            st.sidebar.title(f"Olá, {st.session_state['username']}!")
+            st.sidebar.write("Você está autenticado.")
+            st.sidebar.button('Logout', on_click=sistema_login.logout)
+
+            if tipo_usuario == 'administrador':
+                # Opções do menu para administradores
+                opcoes = ['Cadastrar Membro', 'Cadastrar Advertência', 'Buscar Membro', 'Buscar Advertências']
+            else:
+                # Opções do menu para membros comuns
+                opcoes = ['Buscar Membro', 'Buscar Advertências']
+
+            escolha = st.sidebar.selectbox('Escolha uma opção', opcoes)
+            if escolha == 'Cadastrar Membro':
+                cadastrar_membro()
+            elif escolha == 'Cadastrar Advertência' and tipo_usuario == 'administrador':
+                cadastrar_advertencia()
+            elif escolha == 'Buscar Membro':
+                buscar_membro()
+            elif escolha == 'Buscar Advertências':
+                buscar_advertencias()
     else:
         # Mostra a página de login
         st.title('Sistema de Gerenciamento de Membros')
@@ -116,9 +137,11 @@ def main():
         username = st.text_input('Usuário')
         senha = st.text_input('Senha', type='password')
         if st.button('Login'):
-            if sistema_login.autenticar(username, senha):
-                st.success('Login realizado com sucesso!')
-                st.experimental_rerun()
+            tipo_usuario = sistema_login.autenticar(username, senha)
+            if tipo_usuario is not None:
+                st.session_state['username'] = username
+                st.session_state['senha'] = senha
+                st.session_state['está logado'] = True
             else:
                 st.error('Usuário ou senha incorretos.')
 
