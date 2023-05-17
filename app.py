@@ -51,8 +51,35 @@ def cadastrar_membro():
     pontos = st.number_input('Pontos', value=0)
     if st.button('Cadastrar'):
         try:
-            sistema.cadastrar_membro(nome, setor, cargo, pontos)
+            sistema_membros.cadastrar_membro(nome, setor, cargo, pontos)
             st.success('Membro cadastrado com sucesso!')
+        except ValueError as e:
+            st.error(str(e))
+
+def editar_membro():
+    if 'username' not in st.session_state:
+        st.error('Você precisa fazer login para editar um membro.')
+        return
+    nome = st.text_input('Nome')
+    setor_novo = st.text_input('Novo setor')
+    cargo_novo = st.text_input('Novo cargo')
+    pontos_novos = st.number_input('Novos pontos', value=0)
+    if st.button('Editar'):
+        try:
+            sistema.editar_membro(nome, setor_novo, cargo_novo, pontos_novos)
+            st.success('Membro editado com sucesso!')
+        except ValueError as e:
+            st.error(str(e))            
+
+def excluir_membro():
+    if 'username' not in st.session_state:
+        st.error('Você precisa fazer login para excluir um membro.')
+        return
+    nome = st.text_input('Nome do membro a ser excluído')
+    if st.button('Excluir'):
+        try:
+            sistema.excluir_membro(nome)
+            st.success('Membro excluído com sucesso!')
         except ValueError as e:
             st.error(str(e))
 
@@ -65,8 +92,38 @@ def cadastrar_advertencia():
     motivo = st.text_input('Motivo')
     if st.button('Cadastrar'):
         try:
-            sistema.cadastrar_advertencia(nome_membro, pontos, motivo)
+            sistema_membros.cadastrar_advertencia(nome_membro, pontos, motivo)
             st.success('Advertência cadastrada com sucesso!')
+        except ValueError as e:
+            st.error(str(e))
+
+def editar_advertencia():
+    if 'username' not in st.session_state:
+        st.error('Você precisa fazer login para editar uma advertência.')
+        return
+    nome_membro = st.text_input('Nome do membro')
+    pontos_antigos = st.number_input('Pontos antigos', value=0)
+    pontos_novos = st.number_input('Novos pontos', value=0)
+    motivo_novo = st.text_input('Novo motivo')
+    if st.button('Editar'):
+        try:
+            sistema.editar_advertencia(nome_membro, pontos_antigos, pontos_novos, motivo_novo)
+            st.success('Advertência editada com sucesso!')
+        except ValueError as e:
+            st.error(str(e))
+
+
+def excluir_advertencia():
+    if 'username' not in st.session_state:
+        st.error('Você precisa fazer login para excluir uma advertência.')
+        return
+    nome_membro = st.text_input('Nome do membro')
+    pontos = st.number_input('Pontos', value=0)
+    motivo = st.text_input('Motivo')
+    if st.button('Excluir'):
+        try:
+            sistema.excluir_advertencia(nome_membro, pontos, motivo)
+            st.success('Advertência excluída com sucesso!')
         except ValueError as e:
             st.error(str(e))
 
@@ -77,7 +134,7 @@ def buscar_membro():
     nome = st.text_input('Nome')
     if st.button('Buscar'):
         try:
-            membro = sistema.buscar_membro_por_nome(nome)
+            membro = sistema_membros.buscar_membro_por_nome(nome)
             st.write(f'Nome: {membro.nome}')
             st.write(f'Setor: {membro.setor}')
             st.write(f'Cargo: {membro.cargo}')
@@ -92,7 +149,7 @@ def buscar_advertencias():
     nome = st.text_input('Nome')
     if st.button('Buscar'):
         try:
-            advertencias = sistema.buscar_advertencias_por_nome(nome)
+            advertencias = sistema_membros.buscar_advertencias_por_nome(nome)
             for adv in advertencias:
                 st.write(str(adv))
         except ValueError as e:
@@ -122,10 +179,22 @@ def main():
                 opcoes = ['Buscar Membro', 'Buscar Advertências']
 
             escolha = st.sidebar.selectbox('Escolha uma opção', opcoes)
-            if escolha == 'Cadastrar Membro':
+
+            # Opções que só podem ser acessadas por administradores
+            if escolha == 'Cadastrar Membro' and tipo_usuario == 'administrador':
                 cadastrar_membro()
             elif escolha == 'Cadastrar Advertência' and tipo_usuario == 'administrador':
                 cadastrar_advertencia()
+            elif escolha == 'Editar Membro' and tipo_usuario == 'administrador':
+                editar_membro()
+            elif escolha == 'Excluir Membro' and tipo_usuario == 'administrador':
+                excluir_membro()
+            elif escolha == 'Editar Advertência' and tipo_usuario == 'administrador':
+                editar_advertencia()
+            elif escolha == 'Excluir Advertência' and tipo_usuario == 'administrador':
+                excluir_advertencia()
+
+            # Opções que podem ser acessadas por ambos os tipos de usuário
             elif escolha == 'Buscar Membro':
                 buscar_membro()
             elif escolha == 'Buscar Advertências':
