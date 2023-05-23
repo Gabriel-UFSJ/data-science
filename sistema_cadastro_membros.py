@@ -9,7 +9,7 @@ class SistemaCadastroMembros:
 
     def _carregar_membros(self):
         membros = {}
-        with open(self.membros_file, 'r') as f:
+        with open(self.membros_file, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 membros[row['nome']] = Membro(row['nome'], row['setor'], row['cargo'], int(row['pontos']))
@@ -17,7 +17,7 @@ class SistemaCadastroMembros:
 
     def _carregar_advertencias(self):
         advertencias = []
-        with open(self.advertencias_file, 'r') as f:
+        with open(self.advertencias_file, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 membro = self.membros[row['nome']]
@@ -46,6 +46,18 @@ class SistemaCadastroMembros:
         self.membros[nome] = Membro(nome, setor, cargo, pontos)
         self._salvar_membros()
 
+    def editar_membro(self, nome, setor, cargo, pontos):
+        membro = self.buscar_membro_por_nome(nome)
+        membro.setor = setor
+        membro.cargo = cargo
+        membro.pontos = pontos
+        self._salvar_membros()
+    
+    def excluir_membro(self, nome):
+        membro = self.buscar_membro_por_nome(nome)
+        del self.membros[nome]
+        self._salvar_membros()
+
     def cadastrar_advertencia(self, nome_membro, pontos, motivo):
         membro = self.membros.get(nome_membro)
         if not membro:
@@ -53,6 +65,22 @@ class SistemaCadastroMembros:
         adv = Advertencia(membro, pontos, motivo)
         membro.adicionar_advertencia(adv)
         self.advertencias.append(adv)
+        self._salvar_advertencias()
+    
+    def editar_advertencia(self, membro_nome, indice_advertencia, pontos, motivo):
+        advertencias = self.buscar_advertencias_por_nome(membro_nome)
+        if indice_advertencia < 0 or indice_advertencia >= len(advertencias):
+            raise ValueError('Índice de advertência inválido')
+        advertencia = advertencias[indice_advertencia]
+        advertencia.pontos = pontos
+        advertencia.motivo = motivo
+        self._salvar_advertencias()
+
+    def excluir_advertencia(self, membro_nome, indice_advertencia):
+        advertencias = self.buscar_advertencias_por_nome(membro_nome)
+        if indice_advertencia < 0 or indice_advertencia >= len(advertencias):
+            raise ValueError('Índice de advertência inválido')
+        advertencias.pop(indice_advertencia)
         self._salvar_advertencias()
 
     def buscar_membro_por_nome(self, nome):
