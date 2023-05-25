@@ -77,11 +77,10 @@ def excluir_membro():
         return
     nome = st.text_input('Nome do membro a ser excluído')
     if st.button('Excluir'):
-        try:
-            sistema.excluir_membro(nome)
+        if sistema.excluir_membro(nome):
             st.success('Membro excluído com sucesso!')
-        except ValueError as e:
-            st.error(str(e))
+        else:
+            st.error('Membro não encontrado')
 
 def cadastrar_advertencia():
     if 'username' not in st.session_state:
@@ -112,7 +111,6 @@ def editar_advertencia():
             st.success('Advertência editada com sucesso!')
         except ValueError as e:
             st.error(str(e))
-
 
 def excluir_advertencia():
     if 'username' not in st.session_state:
