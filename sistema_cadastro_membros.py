@@ -12,7 +12,7 @@ class SistemaCadastroMembros:
         with open(self.membros_file, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                membros[row['nome']] = Membro(row['nome'], row['setor'], row['cargo'], int(row['pontos']))
+                membros[row['nome']] = Membro(row['nome'], row['email'], row['setor'], row['cargo'], int(row['pontos']))
         return membros
 
     def _carregar_advertencias(self):
@@ -29,9 +29,9 @@ class SistemaCadastroMembros:
     def _salvar_membros(self):
         with open(self.membros_file, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['nome', 'setor', 'cargo', 'pontos'])
+            writer.writerow(['nome', 'email', 'setor', 'cargo', 'pontos'])
             for membro in self.membros.values():
-                writer.writerow([membro.nome, membro.setor, membro.cargo, membro.pontos])
+                writer.writerow([membro.nome, membro.email, membro.setor, membro.cargo, membro.pontos])
 
     def _salvar_advertencias(self):
         with open(self.advertencias_file, 'w', newline='') as f:
@@ -40,11 +40,12 @@ class SistemaCadastroMembros:
             for adv in self.advertencias:
                 writer.writerow([adv.membro.nome, adv.pontos, adv.motivo])
 
-    def cadastrar_membro(self, nome, setor, cargo, pontos):
+    def cadastrar_membro(self, nome, email, setor, cargo, pontos):
         if nome in self.membros:
-            raise ValueError('Membro já cadastrado')
-        self.membros[nome] = Membro(nome, setor, cargo, pontos)
+            return False
+        self.membros[nome] = Membro(nome, email, setor, cargo, pontos)
         self._salvar_membros()
+        return True
 
     def editar_membro(self, nome, setor, cargo, pontos):
         membro = self.buscar_membro_por_nome(nome)
@@ -58,10 +59,7 @@ class SistemaCadastroMembros:
         del self.membros[nome]
         self._salvar_membros()
 
-    def cadastrar_advertencia(self, nome_membro, pontos, motivo):
-        membro = self.membros.get(nome_membro)
-        if not membro:
-            raise ValueError('Membro não encontrado')
+    def cadastrar_advertencia(self, membro, pontos, motivo):
         adv = Advertencia(membro, pontos, motivo)
         membro.adicionar_advertencia(adv)
         self.advertencias.append(adv)
@@ -84,20 +82,18 @@ class SistemaCadastroMembros:
         self._salvar_advertencias()
 
     def buscar_membro_por_nome(self, nome):
-        membro = self.membros.get(nome)
-        if not membro:
-            raise ValueError('Membro não encontrado')
-        return membro
+        return self.membros.get(nome)
 
     def buscar_advertencias_por_nome(self, nome):
         membro = self.membros.get(nome)
         if not membro:
-            raise ValueError('Membro não encontrado')
+            return None
         return membro.advertencias
 
 class Membro:
-    def __init__(self, nome, setor, cargo, pontos):
+    def __init__(self, nome, email, setor, cargo, pontos):
         self.nome = nome
+        self.email = email
         self.setor = setor
         self.cargo = cargo
         self.pontos = pontos
@@ -106,6 +102,7 @@ class Membro:
     def adicionar_advertencia(self, adv):
         self.advertencias.append(adv)
         self.pontos += adv.pontos
+
 
 class Advertencia:
     def __init__(self, membro, pontos, motivo):
