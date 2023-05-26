@@ -46,15 +46,15 @@ def cadastrar_membro():
         st.error('Você precisa fazer login para cadastrar uma advertência.')
         return
     nome = st.text_input('Nome')
+    email = st.text_input('Email')
     setor = st.text_input('Setor')
     cargo = st.text_input('Cargo')
     pontos = st.number_input('Pontos', value=0)
     if st.button('Cadastrar'):
-        try:
-            sistema_membros.cadastrar_membro(nome, setor, cargo, pontos)
+        if sistema.cadastrar_membro(nome, email, setor, cargo, pontos):
             st.success('Membro cadastrado com sucesso!')
-        except ValueError as e:
-            st.error(str(e))
+        else:
+            st.error('Membro já cadastrado')
 
 def editar_membro():
     if 'username' not in st.session_state:
@@ -77,11 +77,10 @@ def excluir_membro():
         return
     nome = st.text_input('Nome do membro a ser excluído')
     if st.button('Excluir'):
-        try:
-            sistema.excluir_membro(nome)
+        if sistema.excluir_membro(nome):
             st.success('Membro excluído com sucesso!')
-        except ValueError as e:
-            st.error(str(e))
+        else:
+            st.error('Membro não encontrado')
 
 def cadastrar_advertencia():
     if 'username' not in st.session_state:
@@ -91,11 +90,12 @@ def cadastrar_advertencia():
     pontos = st.number_input('Pontos', value=0)
     motivo = st.text_input('Motivo')
     if st.button('Cadastrar'):
-        try:
-            sistema_membros.cadastrar_advertencia(nome_membro, pontos, motivo)
-            st.success('Advertência cadastrada com sucesso!')
-        except ValueError as e:
-            st.error(str(e))
+        membro = sistema.buscar_membro_por_nome(nome_membro)
+        if membro is None:
+            st.error("Membro não encontrado")
+
+        sistema.cadastrar_advertencia(membro, pontos, motivo)
+        st.success('Advertência cadastrada com sucesso!')
 
 def editar_advertencia():
     if 'username' not in st.session_state:
@@ -111,7 +111,6 @@ def editar_advertencia():
             st.success('Advertência editada com sucesso!')
         except ValueError as e:
             st.error(str(e))
-
 
 def excluir_advertencia():
     if 'username' not in st.session_state:
@@ -133,14 +132,15 @@ def buscar_membro():
         return
     nome = st.text_input('Nome')
     if st.button('Buscar'):
-        try:
-            membro = sistema_membros.buscar_membro_por_nome(nome)
-            st.write(f'Nome: {membro.nome}')
-            st.write(f'Setor: {membro.setor}')
-            st.write(f'Cargo: {membro.cargo}')
-            st.write(f'Pontos: {membro.pontos}')
-        except ValueError as e:
-            st.error(str(e))
+        membro = sistema.buscar_membro_por_nome(nome)
+        if membro is None:
+            st.error("Membro não encontrado")
+
+        st.write(f'Nome: {membro.nome}')
+        st.write(f'Email: {membro.email}')
+        st.write(f'Setor: {membro.setor}')
+        st.write(f'Cargo: {membro.cargo}')
+        st.write(f'Pontos: {membro.pontos}')
 
 def buscar_advertencias():
     if 'username' not in st.session_state:
@@ -148,12 +148,12 @@ def buscar_advertencias():
         return
     nome = st.text_input('Nome')
     if st.button('Buscar'):
-        try:
-            advertencias = sistema_membros.buscar_advertencias_por_nome(nome)
-            for adv in advertencias:
-                st.write(str(adv))
-        except ValueError as e:
-            st.error(str(e))
+        advertencias = sistema.buscar_advertencias_por_nome(nome)
+        if advertencias is None:
+            st.error("Membro não encontrado")
+
+        for adv in advertencias:
+            st.write(str(adv))
 
 def main():
     sistema_login = SistemaLogin(USUARIOS_FILE)
