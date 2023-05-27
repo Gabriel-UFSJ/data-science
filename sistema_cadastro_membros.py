@@ -1,19 +1,21 @@
 from membros import MembrosCSV, Membro
 from advertencias import AdvertenciasCSV, Advertencia
 
+import streamlit as st
+
 class SistemaCadastroMembros:
     def __init__(self, membros_file, advertencias_file):
         self.membros_file = membros_file
         self.advertencias_file = advertencias_file
 
         self.membros = MembrosCSV.read(self.membros_file)
-        self.advertencias = AdvertenciasCSV.read(self.membros_file, self.membros)
+        self.advertencias = AdvertenciasCSV.read(self.advertencias_file, self.membros)
 
     def _salvar_membros(self):
         MembrosCSV.save(self.membros, self.membros_file)
 
     def _salvar_advertencias(self):
-        AdvertenciasCSV.save(self.membros_file, self.membros)
+        AdvertenciasCSV.save(self.advertencias_file, self.membros)
 
     def cadastrar_membro(self, nome, email, setor, cargo, pontos):
         if nome in self.membros:
@@ -75,3 +77,6 @@ class SistemaCadastroMembros:
         if not membro:
             return None
         return membro.advertencias
+    
+    def listar_membros(self):
+        return list(self.membros.values())

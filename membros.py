@@ -3,7 +3,7 @@ import csv
 class MembrosCSV:
     def read(membros_file):
         membros = {}
-        with open(membros_file, 'r', encoding='utf-8') as f:
+        with open(membros_file, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 membros[row['nome']] = Membro(row['nome'], row['email'], row['setor'], row['cargo'], int(row['pontos']))

@@ -1,6 +1,13 @@
 import streamlit as st
 import csv
+
+from agenda import Agenda
 from sistema_cadastro_membros import SistemaCadastroMembros
+
+
+USUARIOS_FILE = 'usuarios.csv'
+MEMBROS_FILE = 'membros.csv'
+ADVERTENCIAS_FILE = 'advertencias.csv'
 
 class SistemaLogin:
     def __init__(self, usuarios_file):
@@ -29,9 +36,10 @@ class SistemaLogin:
     def tipo_usuario(self):
         return st.session_state.get('tipo_usuario')
 
-USUARIOS_FILE = 'usuarios.csv'
-MEMBROS_FILE = 'membros.csv'
-ADVERTENCIAS_FILE = 'advertencias.csv'
+sistema_login = SistemaLogin(USUARIOS_FILE)
+sistema_membros = SistemaCadastroMembros(MEMBROS_FILE, ADVERTENCIAS_FILE)
+
+#Membros
 
 def cadastrar_membro(sistema_membros):
     if 'username' not in st.session_state:
@@ -43,10 +51,26 @@ def cadastrar_membro(sistema_membros):
     cargo = st.text_input('Cargo')
     pontos = st.number_input('Pontos', value=0)
     if st.button('Cadastrar'):
-        if sistema.cadastrar_membro(nome, email, setor, cargo, pontos):
+        if sistema_membros.cadastrar_membro(nome, email, setor, cargo, pontos):
             st.success('Membro cadastrado com sucesso!')
         else:
             st.error('Membro já cadastrado')
+
+def buscar_membro(sistema_membros):
+    if 'username' not in st.session_state:
+        st.error('Você precisa fazer login para cadastrar um membro.')
+        return
+    nome = st.text_input('Nome')
+    if st.button('Buscar'):
+        membro = sistema_membros.buscar_membro_por_nome(nome)
+        if membro is None:
+            st.error("Membro não encontrado")
+
+        st.write(f'Nome: {membro.nome}')
+        st.write(f'Email: {membro.email}')
+        st.write(f'Setor: {membro.setor}')
+        st.write(f'Cargo: {membro.cargo}')
+        st.write(f'Pontos: {membro.pontos}')
 
 def editar_membro(sistema_membros):
     if 'username' not in st.session_state:
@@ -69,10 +93,25 @@ def excluir_membro(sistema_membros):
         return
     nome = st.text_input('Nome do membro a ser excluído')
     if st.button('Excluir'):
-        if sistema.excluir_membro(nome):
+        if sistema_membros.excluir_membro(nome):
             st.success('Membro excluído com sucesso!')
         else:
             st.error('Membro não encontrado')
+
+def listar_membros(sistema_membros):
+    if 'username' not in st.session_state:
+        st.error('Você precisa fazer login para listar os membros.')
+        return
+    st.write('Lista de membros')
+    membros_selecionados = []
+    for membro in sistema_membros.listar_membros():
+        checkbox = st.checkbox(membro.nome)
+        st.write(f'Email: {membro.email}', f'Setor: {membro.setor}', f'Cargo: {membro.cargo}', f'Pontos: {membro.pontos}')
+        if checkbox:
+            membros_selecionados.append(membro)
+    return membros_selecionados
+    
+# Advertências
 
 def cadastrar_advertencia(sistema_membros):
     if 'username' not in st.session_state:
@@ -82,11 +121,11 @@ def cadastrar_advertencia(sistema_membros):
     pontos = st.number_input('Pontos', value=0)
     motivo = st.text_input('Motivo')
     if st.button('Cadastrar'):
-        membro = sistema.buscar_membro_por_nome(nome_membro)
+        membro = sistema_membros.buscar_membro_por_nome(nome_membro)
         if membro is None:
             st.error("Membro não encontrado")
 
-        sistema.cadastrar_advertencia(membro, pontos, motivo)
+        sistema_membros.cadastrar_advertencia(membro, pontos, motivo)
         st.success('Advertência cadastrada com sucesso!')
 
 def editar_advertencia(sistema_membros):
@@ -104,7 +143,7 @@ def editar_advertencia(sistema_membros):
         except ValueError as e:
             st.error(str(e))
 
-def excluir_advertencia():
+def excluir_advertencia(sistema_membros):
     if 'username' not in st.session_state:
         st.error('Você precisa fazer login para excluir uma advertência.')
         return
@@ -128,38 +167,46 @@ def excluir_advertencia():
         else:
             st.warning('Nenhuma advertência encontrada para o membro especificado.')
 
-def buscar_membro(sistema_membros):
-    if not st.session_state.get('está logado'):
-        st.error('Você precisa fazer login para buscar um membro.')
-        return
-    nome = st.text_input('Nome')
-    if st.button('Buscar'):
-        membro = sistema.buscar_membro_por_nome(nome)
-        if membro is None:
-            st.error("Membro não encontrado")
-
-        st.write(f'Nome: {membro.nome}')
-        st.write(f'Email: {membro.email}')
-        st.write(f'Setor: {membro.setor}')
-        st.write(f'Cargo: {membro.cargo}')
-        st.write(f'Pontos: {membro.pontos}')
-
 def buscar_advertencias(sistema_membros):
     if 'username' not in st.session_state:
         st.error('Você precisa fazer login para buscar advertências.')
         return
     nome = st.text_input('Nome')
     if st.button('Buscar'):
-        advertencias = sistema.buscar_advertencias_por_nome(nome)
+        advertencias = sistema_membros.buscar_advertencias_por_nome(nome)
         if advertencias is None:
             st.error("Membro não encontrado")
 
         for adv in advertencias:
             st.write(str(adv))
 
+def criar_reunião(agenda):
+    if 'username' not in st.session_state:
+        st.error('Você precisa fazer login para listar os membros.')
+        return
+    
+    with st.form("my_form"):
+        data = st.text_input("Data da reunião: ")
+        horario = st.text_input("Horário da reunião: ")
+        local = st.text_input("Local da reunião: ")
+        assunto = st.text_input("Assunto da reunião: ")
+
+        st.write('Lista de membros')
+
+        membros = sistema_membros.listar_membros()
+        membros_nomes = [membro.nome for membro in membros]
+
+        membros_selecionados = st.multiselect("Selecione os membros", ['Green', 'Yellow', 'Red', 'Blue'], key = 1, on_change = None)
+        st.write(membros_selecionados)
+        submitted = st.form_submit_button("Submit")
+        if submitted:
+            agenda.criar_reuniao(data, horario, local, assunto, membros_selecionados)
+            st.success('Reunião cadastrada com sucesso!')
+
 def main():
     sistema_login = SistemaLogin(USUARIOS_FILE)
     sistema_membros = SistemaCadastroMembros(MEMBROS_FILE, ADVERTENCIAS_FILE)
+    agenda = Agenda()
 
     # Verifica se o usuário está autenticado
     if 'username' in st.session_state:
@@ -178,7 +225,7 @@ def main():
                 # Opções do menu para administradores
                 opcoes = ['Cadastrar Membro', 'Editar Membro', 'Excluir Membro',
                           'Cadastrar Advertência', 'Editar Advertência', 'Excluir Advertência',
-                          'Buscar Membro', 'Buscar Advertências']
+                          'Buscar Membro', 'Buscar Advertências', 'Criar Reunião']
             else:
                 # Opções do menu para membros comuns
                 opcoes = ['Cadastrar Membro', 'Buscar Membro', 'Buscar Advertências']
@@ -202,6 +249,8 @@ def main():
                         buscar_membro(sistema_membros)
                     elif opcao == 'Buscar Advertências':
                         buscar_advertencias(sistema_membros)
+                    elif opcao == 'Criar Reunião':
+                        criar_reunião(agenda)
 
     else:
         st.title('Sistema de Cadastro de Membros e Advertências')
@@ -217,6 +266,12 @@ def main():
                 st.session_state['tipo_usuario'] = tipo_usuario
             else:
                 st.error('Usuário ou senha inválidos.')
+    
+    #membros_selecionados = []
+    #membros_selecionados.append(['Gabriel', 'tunicokill@gmail.com', 'APP', 'Desenvolvedor', 25])
+    #reuniao = agenda.criar_reuniao(data='27/05/23', horario='20:00', local='oficina', assunto='freio', membros=membros_selecionados)
+    #agenda = Agenda()
+    #agenda.enviar_emails(reuniao)
 
 if __name__ == '__main__':
     main()

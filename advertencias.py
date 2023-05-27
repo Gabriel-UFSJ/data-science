@@ -3,10 +3,10 @@ import csv
 class AdvertenciasCSV:
     def read(advertencias_file, membros):
         advertencias = []
-        with open(advertencias_file, 'r', encoding='utf-8') as f:
+        with open(advertencias_file, 'r',encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                membro = membros[row['nome']]
+                membro = membros[row['\ufeffnome']]
                 adv = Advertencia(membro, int(row['pontos']), row['motivo'])
                 membro.adicionar_advertencia(adv)
                 advertencias.append(adv)
