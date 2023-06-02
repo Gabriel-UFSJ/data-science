@@ -1,5 +1,4 @@
 import smtplib
-from email.header import Header
 
 class Agenda:
     def __init__(self):
@@ -34,7 +33,8 @@ class Agenda:
         """
 
         for membro in reuniao.membros:
-            destinatario = membro[1]
+            print(membro)
+            destinatario = membro.email
             mensagem = f"Subject: {assunto}\n\n{corpo}".encode('utf-8')
             server.sendmail(remetente, destinatario, mensagem)
 

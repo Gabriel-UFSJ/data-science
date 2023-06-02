@@ -180,7 +180,7 @@ def buscar_advertencias(sistema_membros):
         for adv in advertencias:
             st.write(str(adv))
 
-def criar_reunião(agenda):
+def criar_reuniao(agenda):
     if 'username' not in st.session_state:
         st.error('Você precisa fazer login para listar os membros.')
         return
@@ -194,10 +194,8 @@ def criar_reunião(agenda):
         st.write('Lista de membros')
 
         membros = sistema_membros.listar_membros()
-        membros_nomes = [membro.nome for membro in membros]
+        membros_selecionados = st.multiselect("Selecione os membros", membros, format_func=lambda membro: membro.nome)
 
-        membros_selecionados = st.multiselect("Selecione os membros", ['Green', 'Yellow', 'Red', 'Blue'], key = 1, on_change = None)
-        st.write(membros_selecionados)
         submitted = st.form_submit_button("Submit")
         if submitted:
             agenda.criar_reuniao(data, horario, local, assunto, membros_selecionados)
@@ -224,33 +222,31 @@ def main():
             if tipo_usuario == 'administrador':
                 # Opções do menu para administradores
                 opcoes = ['Cadastrar Membro', 'Editar Membro', 'Excluir Membro',
-                          'Cadastrar Advertência', 'Editar Advertência', 'Excluir Advertência',
-                          'Buscar Membro', 'Buscar Advertências', 'Criar Reunião']
+                        'Cadastrar Advertência', 'Editar Advertência', 'Excluir Advertência',
+                        'Buscar Membro', 'Buscar Advertências', 'Criar Reunião']
             else:
                 # Opções do menu para membros comuns
                 opcoes = ['Cadastrar Membro', 'Buscar Membro', 'Buscar Advertências']
 
-            # Mostra as opções como botões na barra lateral
-            for opcao in opcoes:
-                if st.sidebar.button(opcao):
-                    if opcao == 'Cadastrar Membro':
-                        cadastrar_membro(sistema_membros)
-                    elif opcao == 'Editar Membro':
-                        editar_membro(sistema_membros)
-                    elif opcao == 'Excluir Membro':
-                        excluir_membro(sistema_membros)
-                    elif opcao == 'Cadastrar Advertência':
-                        cadastrar_advertencia(sistema_membros)
-                    elif opcao == 'Editar Advertência':
-                        editar_advertencia(sistema_membros)
-                    elif opcao == 'Excluir Advertência':
-                        excluir_advertencia(sistema_membros)
-                    elif opcao == 'Buscar Membro':
-                        buscar_membro(sistema_membros)
-                    elif opcao == 'Buscar Advertências':
-                        buscar_advertencias(sistema_membros)
-                    elif opcao == 'Criar Reunião':
-                        criar_reunião(agenda)
+            escolha = st.sidebar.selectbox('Escolha uma opção', opcoes)
+            if escolha == 'Cadastrar Membro':
+                cadastrar_membro(sistema_membros)
+            elif escolha == 'Editar Membro':
+                editar_membro(sistema_membros)
+            elif escolha == 'Excluir Membro':
+                excluir_membro(sistema_membros)
+            elif escolha == 'Cadastrar Advertência':
+                cadastrar_advertencia(sistema_membros)
+            elif escolha == 'Editar Advertência':
+                editar_advertencia(sistema_membros)
+            elif escolha == 'Excluir Advertência':
+                excluir_advertencia(sistema_membros)
+            elif escolha == 'Buscar Membro':
+                buscar_membro(sistema_membros)
+            elif escolha == 'Buscar Advertências':
+                buscar_advertencias(sistema_membros)
+            elif escolha == 'Criar Reunião':
+                criar_reuniao(agenda)
 
     else:
         st.title('Sistema de Cadastro de Membros e Advertências')
@@ -266,12 +262,6 @@ def main():
                 st.session_state['tipo_usuario'] = tipo_usuario
             else:
                 st.error('Usuário ou senha inválidos.')
-    
-    #membros_selecionados = []
-    #membros_selecionados.append(['Gabriel', 'tunicokill@gmail.com', 'APP', 'Desenvolvedor', 25])
-    #reuniao = agenda.criar_reuniao(data='27/05/23', horario='20:00', local='oficina', assunto='freio', membros=membros_selecionados)
-    #agenda = Agenda()
-    #agenda.enviar_emails(reuniao)
 
 if __name__ == '__main__':
     main()
